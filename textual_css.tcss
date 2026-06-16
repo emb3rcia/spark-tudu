@@ -1,0 +1,21 @@
+Screen {
+    layout: vertical;
+}
+
+.width-one {
+    width: 1fr;
+}
+.width-two {
+    width: 2fr;
+}
+
+.height-one {
+    height: 1fr;
+}
+.height-two {
+    height: 2fr;
+}
+
+.border-gray {
+    border: solid gray;
+}
