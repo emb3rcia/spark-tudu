@@ -1,0 +1,4 @@
+[editor]
+command = ["code", "-g", "{file}:{line}"]
+wait = false
+terminal = false

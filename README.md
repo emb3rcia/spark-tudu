@@ -9,6 +9,9 @@
 - [Syntax](#syntax)
 - [Installation and usage](#installation-and-usage)
 - [Supported markers](#supported-markers)
+- [Supported priorities](#supported-priorities)
+- [Config](#config)
+  - [Different editor presets](#different-editor-presets)
 - [Dependencies](#dependencies)
 - [Images](#images)
 - [License](#license)
@@ -23,14 +26,11 @@ Motivation for this project comes from both need for simple project when returni
 I learned how to use Textual and how to make TUI apps.
 
 # Project status
-Minimum Viable Product is done. It was made in 3 hours. This isn't finished version yet, as project has more features planned.
+~~Minimum Viable Product is done. It was made in 3 hours. This isn't finished version yet, as project has more features planned.~~ As of 17.06.2026, app has been extended with colored output, opening file in editor at specific line, more prefixes and support for priorities. Planned features are available [here](#planned-features).
 
 ## Planned features
-- Opening specific file with specific line selected using control and enter
-- Adding priority levels to syntax
 - Better deadline handling
 - Filtering options
-- Rescan option
 - Export of results
 - Better table design
 - Project summary screen
@@ -40,11 +40,11 @@ Minimum Viable Product is done. It was made in 3 hours. This isn't finished vers
 # Syntax
 App detects comments with this syntax:
 
-`language comment prefix marker/comment/deadline`
+`language comment prefix marker/priority/comment/deadline`
 
 Example:
 
-`# TODO/Add themes/22.10.2027`
+`# TODO/HIGH/Add themes/22.10.2027`
 
 # Installation and usage
 Download `.py` file from GitHub Releases and run it through terminal of your choice using `python main.py` in project directory. You can also clone this project using `git clone https://github.com/emb3rcia/spark-tudu`
@@ -58,14 +58,109 @@ Currently supported markers:
 - NOTE
 - IDEA
 - REVIEW
+- SECURITY
+- DOCS
+- TEST
+- PERF
+- CLEANUP
+- BLOCKED
+
+# Supported priorities
+Currently supported priorities:
+- CRITICAL
+- HIGH
+- MEDIUM
+- LOW
+- OPTIONAL
+
+# Config
+
+spark-tudu supports a config file. The config file must be present in the directory from which you run the program.
+
+If the config file does not exist, spark-tudu uses the default config made for VS Code.
+
+The config file must be named `spark-tudu.toml` and can include these options:
+
+```toml
+[editor]
+command = ["command", "arguments"]
+wait = true/false
+terminal = true/false
+```
+Default config:
+```toml
+[editor]
+command = ["code", "-g", "{file}:{line}"]
+wait = false
+terminal = false
+```
+
+## Different editor presets
+Here are presets for common editors:
+
+**VS Code / Code OSS (default):**
+```toml
+[editor]
+command = ["code", "-g", "{file}:{line}"]
+wait = false
+terminal = false
+```
+**VSCodium:**
+```toml
+[editor]
+command = ["codium", "-g", "{file}:{line}"]
+wait = false
+terminal = false
+```
+**Nano:**
+```toml
+[editor]
+command = ["nano", "+{line},1", "{file}"]
+wait = true
+terminal = true
+```
+**Vim:**
+```toml
+[editor]
+command = ["vim", "+{line}", "{file}"]
+wait = true
+terminal = true
+```
+**Neovim:**
+```toml
+[editor]
+command = ["nvim", "+{line}", "{file}"]
+wait = true
+terminal = true
+```
+**Sublime Text:**
+```toml
+[editor]
+command = ["subl", "{file}:{line}"]
+wait = false
+terminal = false
+```
+**JetBrains IDE:**
+```toml
+[editor]
+command = ["idea", "--line", "{line}", "{file}"]
+wait = false
+terminal = false
+```
 
 # Dependencies
 - `textual`
 - `rich`
 
-Install command for PyPI: `pip install textual rich`
+Install with pip: 
 
-Install command for Arch-based distributions: `sudo pacman -S python-textual` (`python-rich` is installed as dependency of `python-textual`)
+`pip install textual rich`
+
+Install command for Arch-based distributions:
+
+`sudo pacman -S python-textual` 
+
+(`python-rich` is installed as dependency of `pyt hon-textual`)
 
 # Images
 ![dark mode](Images/dark.png)
@@ -74,4 +169,4 @@ Install command for Arch-based distributions: `sudo pacman -S python-textual` (`
 # License
 All files are licensed under the Apache 2.0 License.
 
-See `/Licenses/Apache-2.0.txt` for full terms
+See `Licenses/Apache-2.0.txt` for full terms
