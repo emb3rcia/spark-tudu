@@ -43,7 +43,30 @@ MARKERS = [
     "NOTE",
     "IDEA",
     "REVIEW",
+    "SECURITY",
+    "DOCS",
+    "TEST",
+    "PERF",
+    "CLEANUP",
+    "BLOCKED",
 ]
+
+# used ai for hex code due to time spent for searching every one of them it would take
+MARKER_COLORS = {
+    "TODO": "#00ffff",
+    "FIXME": "#ffff00",
+    "BUG": "#ff0000",
+    "HACK": "#ff00ff",
+    "NOTE": "#0088ff",
+    "IDEA": "#00ff88",
+    "REVIEW": "#aa66ff",
+    "SECURITY": "#3366ff",
+    "DOCS": "#33cc66",
+    "TEST": "#ff8800",
+    "PERF": "#a86f32",
+    "CLEANUP": "#66ff66",
+    "BLOCKED": "#ff3333",
+}
 
 COMMENT_PREFIXES = {
     ".py": ["#"],
@@ -136,9 +159,13 @@ found_items = []
 
 for file_name, found in DATA.items():
     for line_number, found_type, found_name, found_date in found:
+        color = MARKER_COLORS.get(found_type, "white")
+        text = Text(f"{file_name}:{line_number} - ")
+        text.append(found_type, style=color)
+        text.append(f": {found_name}")
         list_items.append(
             ListItem(
-                Label(f"{file_name}:{line_number} - {found_type}: {found_name.strip()}")
+                Label(text)
             )
         )
         found_items.append(
@@ -192,7 +219,10 @@ class TuduApp(App):
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
-        table.add_columns(*ROWS[0])
+        table.add_column("File")
+        for marker in MARKERS:
+            color = MARKER_COLORS.get(marker, "white")
+            table.add_column(Text(marker, style=color))
         for row in ROWS[1:]:
             styled_row = [
                 Text(str(cell)) for cell in row
@@ -219,7 +249,13 @@ class TuduApp(App):
 
         file_name, line_number, found_type, comment, deadline = found_items[index]
 
-        details_string = f"File: {file_name} \nLine: {line_number} \nType: {found_type} \n\nComment: \n{comment}"
+        color = MARKER_COLORS.get(found_type, "white")
+        details_string = Text()
+        details_string.append(f"File: {file_name}\n")
+        details_string.append(f"Line: {line_number}\n")
+        details_string.append(f"Type: ")
+        details_string.append(found_type, style=color)
+        details_string.append(f"\n\nComment: \n{comment}")
         if deadline:
             details_string += f"\n\nDeadline: \n{deadline}"
 
