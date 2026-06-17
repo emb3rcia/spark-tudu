@@ -1,6 +1,8 @@
 # imports
 import subprocess
 import tomllib
+import datetime
+import json
 
 from rich.text import Text
 
@@ -52,6 +54,13 @@ MARKERS = [
     "PERF",
     "CLEANUP",
     "BLOCKED",
+]
+
+CURRENT_FILTER = None
+
+FILTER_CYCLING = [
+    None,
+    *MARKERS
 ]
 
 # used ai for hex code due to time spent for searching every one of them it would take
@@ -110,6 +119,15 @@ COMMENT_PREFIXES = {
     ".md": ["#", "<!--"],
 }
 
+PRIORITY_ORDER = {
+    "CRITICAL": 0,
+    "HIGH": 1,
+    "MEDIUM": 2,
+    "LOW": 3,
+    "OPTIONAL": 4,
+    "UNKNOWN": 5,
+}
+
 def get_config_editor():
     config_path = PROJECT_DIR / "spark-tudu.toml"
 
@@ -156,6 +174,8 @@ def scan():
 
     data = {}
 
+    markers_total_count = {marker: 0 for marker in MARKERS}
+
     for path in PROJECT_DIR.rglob("*"):
         if any(part in IGNORED for part in path.parts):
             continue
@@ -200,6 +220,7 @@ def scan():
                             deadline = deadline.removesuffix("*/").strip()
 
                             counts[marker] += 1
+                            markers_total_count[marker] += 1
                             file_items.append((line_number, marker, priority, comment, deadline))
 
                 if file_items:
@@ -208,6 +229,8 @@ def scan():
         except Exception as e:
             print(e)
             quit()
+
+    rows.insert(1, ("TOTAL", *[markers_total_count[marker] for marker in MARKERS]))
 
     return rows, data
 
@@ -222,21 +245,33 @@ def list_items_compose():
 
     for file_name, found in DATA.items():
         for line_number, found_type, found_priority, found_name, found_date in found:
-            color = MARKER_COLORS.get(found_type, "white")
-            color_priority = PRIORITY_COLORS.get(found_priority, "white")
-            text = Text(f"{file_name}:{line_number}, ")
-            text.append(found_priority, style=color_priority)
-            text.append(" - ")
-            text.append(found_type, style=color)
-            text.append(f": {found_name}")
-            list_items.append(
-                ListItem(
-                    Label(text)
-                )
-            )
+            if CURRENT_FILTER != None and found_type != CURRENT_FILTER:
+                continue
             found_items.append(
                 (file_name, line_number, found_type, found_priority, found_name.strip(), found_date.strip())
             )
+    
+    found_items.sort(
+        key=lambda item: (
+            PRIORITY_ORDER.get(item[3], 999),
+            item[0],
+            item[1],
+        )
+    )
+    for file_name, line_number, found_type, found_priority, found_name, found_date in found_items:
+        color = MARKER_COLORS.get(found_type, "white")
+        color_priority = PRIORITY_COLORS.get(found_priority, "white")
+        text = Text(f"{file_name}:{line_number} [")
+        text.append(found_priority, style=color_priority)
+        text.append("] - ")
+        text.append(found_type, style=color)
+        text.append(f": {found_name}")
+        list_items.append(
+            ListItem(
+                Label(text)
+            )
+        )
+
     return list_items, found_items
 
 list_items_composed = []
@@ -245,12 +280,15 @@ found_items_composed = []
 # dark mode taken from textual docs as way of learning and starting the app
 class TuduApp(App):
 
-    TITLE = "spark-tudu"
+    TITLE = f"spark-tudu | Filter: {str(CURRENT_FILTER)}"
 
     BINDINGS: list[BindingType] = [
         Binding("d", "toggle_dark", "Toggle dark mode"),
         Binding("r", "rescan", "Rescan files"),
         Binding("o", "open_selected_marker", "Open selected marker"),
+        Binding("m", "export_md", "Export in MD format"),
+        Binding("j", "export_json", "Export in JSON format"),
+        Binding("c", "cycle_filter", "Cycle filter"),
     ]
 
     CSS_PATH = "textual_css.tcss"
@@ -265,6 +303,41 @@ class TuduApp(App):
                 yield ListView(classes="width-two height-one border-gray",)
                 yield Label("Four", classes="width-two height-one border-gray", id="details")
         yield Footer()
+
+    def action_cycle_filter(self) -> None:
+        global CURRENT_FILTER, FILTER_CYCLING
+        if CURRENT_FILTER in FILTER_CYCLING:
+            index = FILTER_CYCLING.index(CURRENT_FILTER)
+        else:
+            index = 0
+
+        index += 1
+
+        if index >= len(FILTER_CYCLING):
+            index = 0
+
+        CURRENT_FILTER = FILTER_CYCLING[index]
+        self.title = f"spark-tudu | Filter: {str(CURRENT_FILTER)}"
+        global list_items_composed, found_items_composed
+        list_items_composed, found_items_composed = list_items_compose()
+        list_view = self.query_one(ListView)
+        list_view.clear()
+
+        details = self.query_one("#details")
+
+        if not found_items_composed:
+            details.update("No markers found!")
+            return
+        
+        for list_item in list_items_composed:
+            list_view.append(list_item)
+        index_list = list_view.index
+
+        if index_list is None:
+            index_list = 0
+
+        self.show_details(index_list)
+        list_view.focus()
 
     def action_toggle_dark(self) -> None:
         self.theme = (
@@ -282,6 +355,7 @@ class TuduApp(App):
         for marker in MARKERS:
             color = MARKER_COLORS.get(marker, "white")
             table.add_column(Text(marker, style=color))
+
         for row in ROWS[1:]:
             styled_row = [
                 Text(str(cell)) for cell in row
@@ -292,7 +366,7 @@ class TuduApp(App):
 
         list_view = self.query_one(ListView)
         list_view.clear()
-
+        
         if not found_items_composed:
             details.update("No markers found!")
             return
@@ -312,10 +386,34 @@ class TuduApp(App):
         index_list = list_view.index
         if index_list is None:
             index_list = 0
-        
-        file_name, line_number, found_type, found_priority, comment, deadline = found_items_composed[index_list]
+        if found_items_composed:
+            file_name, line_number, found_type, found_priority, comment, deadline = found_items_composed[index_list]
 
-        open_in_editor(file_name, line_number)
+            open_in_editor(file_name, line_number)
+    
+    def action_export_md(self) -> None:
+        string_to_export = f"# spark-tudu export {str(datetime.datetime.now())[0:19]}\n\n"
+        for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
+            string_to_export += f"## {file_name}:{line_number} [{found_priority}] {found_type}\nFile name: {file_name}\nLine: {line_number}\nPriority:{found_priority}\n\nComment:\n{comment}\n\nDeadline:\n{deadline}\n\n"
+        with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.md", "w+", encoding="utf-8") as file:
+            file.writelines(string_to_export)
+
+    def action_export_json(self) -> None:
+        to_export = {
+            "exported_at": str(datetime.datetime.now())[0:19],
+            "items": {}
+        }
+        for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
+            to_export["items"][f"{file_name}:{line_number}"] = {
+                "file_name": file_name,
+                "line_number": line_number,
+                "type": found_type,
+                "priority": found_priority,
+                "comment": comment,
+                "deadline": deadline,
+            }
+        with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.json", "w+", encoding="utf-8") as file:
+            json.dump(to_export, file, indent=4)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
 

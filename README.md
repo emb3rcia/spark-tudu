@@ -30,10 +30,6 @@ I learned how to use Textual and how to make TUI apps.
 
 ## Planned features
 - Better deadline handling
-- Filtering options
-- Export of results
-- Better table design
-- Project summary screen
 - Packaging it as binary for Linux and executable for Windows
 - Uploading it to PyPI and the AUR
 
