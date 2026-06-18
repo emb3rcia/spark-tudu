@@ -149,7 +149,7 @@ def build_editor_command(command_template, file_path, line_number):
         part.replace("{file}", str(file_path)).replace("{line}", str(line_number)) for part in command_template
     ]
 
-def open_in_editor(file_name, line_number):
+def open_in_editor(file_name, line_number, app):
     editor = get_config_editor()
 
     command_template = editor.get("command", ["code", "-g", "{file}:{line}"])
@@ -407,7 +407,7 @@ class TuduApp(App):
         if found_items_composed:
             file_name, line_number, found_type, found_priority, comment, deadline = found_items_composed[index_list]
 
-            open_in_editor(file_name, line_number)
+            open_in_editor(file_name, line_number, self)
     
     def action_export_md(self) -> None:
         if found_items_composed:
@@ -495,6 +495,6 @@ class TuduApp(App):
         details.update(details_string)
 
 
-if __name__ == "__main__":
+def main() -> None:
     app = TuduApp()
     app.run()

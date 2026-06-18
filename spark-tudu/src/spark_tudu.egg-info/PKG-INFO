@@ -1,3 +1,26 @@
+Metadata-Version: 2.4
+Name: spark-tudu
+Version: 0.1.0
+Summary: Python based TUI app for managing TODO and similar messages in your projects.
+Author: emb3rcia
+Project-URL: Homepage, https://github.com/emb3rcia/spark-tudu
+Project-URL: Repository, https://github.com/emb3rcia/spark-tudu
+Project-URL: Issues, https://github.com/emb3rcia/spark-tudu/issues
+Keywords: todo,tui,textual,terminal,developer-tools
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Environment :: Console
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: textual
+Requires-Dist: rich
+Dynamic: license-file
+
 # spark-tudu
 
 # Navigation
@@ -13,7 +36,6 @@
 - [Config](#config)
   - [Different editor presets](#different-editor-presets)
 - [Dependencies](#dependencies)
-- [Images](#images)
 - [License](#license)
 
 # About project
@@ -156,11 +178,7 @@ Install command for Arch-based distributions:
 
 (`python-rich` is installed as dependency of `python-textual`)
 
-# Images
-![dark mode](Images/dark.png)
-![light mode](Images/light.png)
-
 # License
 All files are licensed under the Apache 2.0 License.
 
-See `Licenses/Apache-2.0.txt` for full terms
+See `LICENSE` for full terms

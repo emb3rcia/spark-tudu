@@ -13,7 +13,6 @@
 - [Config](#config)
   - [Different editor presets](#different-editor-presets)
 - [Dependencies](#dependencies)
-- [Images](#images)
 - [License](#license)
 
 # About project
@@ -156,11 +155,7 @@ Install command for Arch-based distributions:
 
 (`python-rich` is installed as dependency of `python-textual`)
 
-# Images
-![dark mode](Images/dark.png)
-![light mode](Images/light.png)
-
 # License
 All files are licensed under the Apache 2.0 License.
 
-See `Licenses/Apache-2.0.txt` for full terms
+See `LICENSE` for full terms
