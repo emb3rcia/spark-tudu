@@ -1,2 +1,0 @@
-[console_scripts]
-spark-tudu = spark_tudu.app:main

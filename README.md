@@ -163,4 +163,4 @@ Install command for Arch-based distributions:
 # License
 All files are licensed under the Apache 2.0 License.
 
-See `Licenses/Apache-2.0.txt` for full terms
+See `Licenses/LICENSE-2.0.txt` for full terms
