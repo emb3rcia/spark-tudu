@@ -19,3 +19,14 @@ Screen {
 .border-gray {
     border: solid gray;
 }
+
+#popup {
+    width: 40;
+    height: 5;
+    content-align: center middle;
+    border: round green;
+}
+
+ShowPopup {
+    align: center middle;
+}

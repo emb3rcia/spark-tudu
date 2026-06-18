@@ -29,7 +29,6 @@ I learned how to use Textual and how to make TUI apps.
 ~~Minimum Viable Product is done. It was made in 3 hours. This isn't finished version yet, as project has more features planned.~~ As of 17.06.2026, app has been extended with colored output, opening file in editor at specific line, more prefixes and support for priorities. Planned features are available [here](#planned-features).
 
 ## Planned features
-- Better deadline handling
 - Packaging it as binary for Linux and executable for Windows
 - Uploading it to PyPI and the AUR
 

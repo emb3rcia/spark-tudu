@@ -10,6 +10,7 @@ from textual.app import App, ComposeResult
 from textual.binding import BindingType, Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, DirectoryTree, DataTable, ListItem, ListView, Label
+from textual.screen import ModalScreen
 
 from pathlib import Path
 
@@ -277,10 +278,27 @@ def list_items_compose():
 list_items_composed = []
 found_items_composed = []
 
+class ShowPopup(ModalScreen):
+    BINDINGS: list[BindingType] = [
+        Binding("escape", "dismiss", "Close"),
+        Binding("enter", "dismiss", "Close"),
+        Binding("space", "dismiss", "Close"),
+    ]
+    def __init__(self, string: str) -> None:
+        super().__init__()
+        self.string = str(string)
+
+    def compose(self) -> ComposeResult:
+        yield Label(self.string, id="popup")
+
+    def action_dismiss(self) -> None:
+        self.dismiss()
+
+
 # dark mode taken from textual docs as way of learning and starting the app
 class TuduApp(App):
 
-    TITLE = f"spark-tudu | Filter: {str(CURRENT_FILTER)}"
+    TITLE = f"spark-tudu | Filter: {str(CURRENT_FILTER)}" if CURRENT_FILTER != None else f"spark-tudu | Filter: All"
 
     BINDINGS: list[BindingType] = [
         Binding("d", "toggle_dark", "Toggle dark mode"),
@@ -317,7 +335,7 @@ class TuduApp(App):
             index = 0
 
         CURRENT_FILTER = FILTER_CYCLING[index]
-        self.title = f"spark-tudu | Filter: {str(CURRENT_FILTER)}"
+        self.title = f"spark-tudu | Filter: {str(CURRENT_FILTER)}" if CURRENT_FILTER != None else f"spark-tudu | Filter: All"
         global list_items_composed, found_items_composed
         list_items_composed, found_items_composed = list_items_compose()
         list_view = self.query_one(ListView)
@@ -392,28 +410,37 @@ class TuduApp(App):
             open_in_editor(file_name, line_number)
     
     def action_export_md(self) -> None:
-        string_to_export = f"# spark-tudu export {str(datetime.datetime.now())[0:19]}\n\n"
-        for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
-            string_to_export += f"## {file_name}:{line_number} [{found_priority}] {found_type}\nFile name: {file_name}\nLine: {line_number}\nPriority:{found_priority}\n\nComment:\n{comment}\n\nDeadline:\n{deadline}\n\n"
-        with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.md", "w+", encoding="utf-8") as file:
-            file.writelines(string_to_export)
+        if found_items_composed:
+            string_to_export = f"# spark-tudu export {str(datetime.datetime.now())[0:19]}\n\n"
+            for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
+                string_to_export += f"## {file_name}:{line_number} [{found_priority}] {found_type}\nFile name: {file_name}\nLine: {line_number}\nPriority:{found_priority}\n\nComment:\n{comment}\n\nDeadline:\n{deadline}\n\n"
+            with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.md", "w+", encoding="utf-8") as file:
+                file.writelines(string_to_export)
+            self.push_screen(ShowPopup("Exported to Markdown"))
+        else:
+            self.push_screen(ShowPopup("No markers to export"))
 
     def action_export_json(self) -> None:
-        to_export = {
-            "exported_at": str(datetime.datetime.now())[0:19],
-            "items": {}
-        }
-        for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
-            to_export["items"][f"{file_name}:{line_number}"] = {
-                "file_name": file_name,
-                "line_number": line_number,
-                "type": found_type,
-                "priority": found_priority,
-                "comment": comment,
-                "deadline": deadline,
+        if found_items_composed:
+            to_export = {
+                "exported_at": str(datetime.datetime.now())[0:19],
+                "items": {}
             }
-        with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.json", "w+", encoding="utf-8") as file:
-            json.dump(to_export, file, indent=4)
+            for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
+                to_export["items"][f"{file_name}:{line_number}"] = {
+                    "file_name": file_name,
+                    "line_number": line_number,
+                    "type": found_type,
+                    "priority": found_priority,
+                    "comment": comment,
+                    "deadline": deadline,
+                }
+            with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.json", "w+", encoding="utf-8") as file:
+                json.dump(to_export, file, indent=4)
+            self.push_screen(ShowPopup("Exported to JSON"))
+        else:
+            self.push_screen(ShowPopup("No markers to export"))
+
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
 
@@ -450,7 +477,20 @@ class TuduApp(App):
         details_string.append(found_priority, style=color_priority)
         details_string.append(f"\n\nComment: \n{comment}")
         if deadline:
-            details_string.append(f"\n\nDeadline: \n{deadline}")
+            try:
+                deadline_composed = datetime.datetime.strptime(deadline, "%d.%m.%Y").date()
+                present = datetime.datetime.now().date()
+                if present > deadline_composed:
+                    delta = present-deadline_composed
+                    details_string.append(f"\n\nDeadline:\nOverdue by {delta.days} days!")
+                else:
+                    delta = deadline_composed-present
+                    if delta.days:
+                        details_string.append(f"\n\nDeadline:\nDue in {delta.days} days")
+                    else:
+                        details_string.append(f"\n\nDeadline:\nDue today!")
+            except Exception as e:
+                details_string.append(f"\n\nDeadline: \n{deadline}")
 
         details.update(details_string)
 
