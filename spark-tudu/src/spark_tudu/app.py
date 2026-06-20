@@ -414,7 +414,7 @@ class TuduApp(App):
             string_to_export = f"# spark-tudu export {str(datetime.datetime.now())[0:19]}\n\n"
             for file_name, line_number, found_type, found_priority, comment, deadline in found_items_composed:
                 string_to_export += f"## {file_name}:{line_number} [{found_priority}] {found_type}\nFile name: {file_name}\nLine: {line_number}\nPriority:{found_priority}\n\nComment:\n{comment}\n\nDeadline:\n{deadline}\n\n"
-            with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.md", "w+", encoding="utf-8") as file:
+            with open(f"spark-tudu-export-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.md", "w+", encoding="utf-8") as file:
                 file.writelines(string_to_export)
             self.push_screen(ShowPopup("Exported to Markdown"))
         else:
@@ -435,7 +435,7 @@ class TuduApp(App):
                     "comment": comment,
                     "deadline": deadline,
                 }
-            with open(f"spark-tudu-export-{str(datetime.datetime.now())[0:19].replace(":", "-").replace(" ", "_")}.json", "w+", encoding="utf-8") as file:
+            with open(f"spark-tudu-export-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json", "w+", encoding="utf-8") as file:
                 json.dump(to_export, file, indent=4)
             self.push_screen(ShowPopup("Exported to JSON"))
         else:
