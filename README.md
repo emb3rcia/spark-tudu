@@ -7,13 +7,13 @@
 - [Project status](#project-status)
   - [Planned features](#planned-features)
 - [Syntax](#syntax)
+- [Scanned file extensions](#scanned-file-extensions)
 - [Installation and usage](#installation-and-usage)
 - [Supported markers](#supported-markers)
 - [Supported priorities](#supported-priorities)
 - [Config](#config)
   - [Different editor presets](#different-editor-presets)
 - [Dependencies](#dependencies)
-- [Images](#images)
 - [License](#license)
 
 # About project
@@ -39,6 +39,32 @@ App detects comments with this syntax:
 Example:
 
 `# TODO/HIGH/Add themes/22.10.2027`
+
+**COMMENT MUST BE IN SEPERATE LINE THAN CODE**
+
+# Scanned file extensions
+spark-tudu scans only files with these extensions:
+```
+".py"
+".pyi"
+".pyw"
+".pyx"
+".px"
+".pxi"
+".c":
+".h"
+".cpp"
+".hpp"
+".cc"
+".hh"
+".cxx"
+".hxx"
+".js"
+".jsx"
+".ts"
+".tsx"
+".md"
+```
 
 # Installation and usage
 Use `pip install spark-tudu` or download Linux binary/Windows executable from [here](https://github.com/emb3rcia/spark-tudu/releases/tag/release) to install it. Use it by either running `spark-tudu` in directory you want to scan or by running downloaded binary/executable from there, depending on how you installed app.
@@ -156,11 +182,7 @@ Install command for Arch-based distributions:
 
 (`python-rich` is installed as dependency of `python-textual`)
 
-# Images
-![dark mode](Images/dark.png)
-![light mode](Images/light.png)
-
 # License
 All files are licensed under the Apache 2.0 License.
 
-See `Licenses/LICENSE-2.0.txt` for full terms
+See `LICENSE` for full terms
