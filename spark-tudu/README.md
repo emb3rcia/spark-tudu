@@ -7,6 +7,7 @@
 - [Project status](#project-status)
   - [Planned features](#planned-features)
 - [Syntax](#syntax)
+- [Scanned file extensions](#scanned-file-extensions)
 - [Installation and usage](#installation-and-usage)
 - [Supported markers](#supported-markers)
 - [Supported priorities](#supported-priorities)
@@ -39,8 +40,34 @@ Example:
 
 `# TODO/HIGH/Add themes/22.10.2027`
 
+**COMMENT MUST BE IN SEPERATE LINE THAN CODE**
+
+# Scanned file extensions
+spark-tudu scans only files with these extensions:
+```
+".py"
+".pyi"
+".pyw"
+".pyx"
+".px"
+".pxi"
+".c":
+".h"
+".cpp"
+".hpp"
+".cc"
+".hh"
+".cxx"
+".hxx"
+".js"
+".jsx"
+".ts"
+".tsx"
+".md"
+```
+
 # Installation and usage
-Download `.py` file from GitHub Releases and run it through terminal of your choice using `python main.py` in project directory. You can also clone this project using `git clone https://github.com/emb3rcia/spark-tudu`
+Use `pip install spark-tudu` or download Linux binary/Windows executable from [here](https://github.com/emb3rcia/spark-tudu/releases/tag/release) to install it. Use it by either running `spark-tudu` in directory you want to scan or by running downloaded binary/executable from there, depending on how you installed app.
 
 # Supported markers
 Currently supported markers:
