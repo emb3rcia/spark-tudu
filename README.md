@@ -17,16 +17,16 @@
 - [License](#license)
 
 # About project
-spark-tudu is simple TUI app written in Python to help you develop your projects. It searches for lines like TODO or FIXME in app's syntax ([about syntax](#syntax)) and provides it to you in one place in TUI written in Textual.
+spark-tudu is a simple TUI app written in Python to help you develop your projects. It searches for lines like TODO or FIXME in app's syntax ([about syntax](#syntax)) and provides it to you in one place in TUI written in Textual.
 
 ## Motivation for the project
-Motivation for this project comes from both need for simple project when returning to coding, and from needing a simple program that puts all my TODOs from different files inside one space.
+Motivation for this project comes from both the need for simple project when returning to coding, and from needing a simple program that puts all my TODOs from different files inside one space.
 
 ## Learning outcomes
 I learned how to use Textual and how to make TUI apps.
 
 # Project status
-Project reached all requirements for 0.1.0 release. Currently app is fully functional
+Project reached all requirements for 0.1.0 release. Currently app is fully functional. 0.1.1 added fixes for python 3.11 and 0.1.2 added more arguments to the config as well as arguments to command.
 
 ## Planned features
 - Currently none
@@ -40,10 +40,10 @@ Example:
 
 `# TODO/HIGH/Add themes/22.10.2027`
 
-**COMMENT MUST BE IN SEPERATE LINE THAN CODE**
+**COMMENT MUST BE IN SEPARATE LINE THAN CODE**
 
 # Scanned file extensions
-spark-tudu scans only files with these extensions:
+spark-tudu scans only files with these extensions by default:
 ```
 ".py"
 ".pyi"
@@ -51,7 +51,7 @@ spark-tudu scans only files with these extensions:
 ".pyx"
 ".px"
 ".pxi"
-".c":
+".c"
 ".h"
 ".cpp"
 ".hpp"
@@ -66,8 +66,21 @@ spark-tudu scans only files with these extensions:
 ".md"
 ```
 
+These can be changed in config by adding for example this:
+
+```
+[files.comment_prefixes]
+".py" = ["##"]
+
+```
+Above example makes it so .py files will be scanned only for comments starting with "##", empty lists can be made to disable scanning for given extension.
+
 # Installation and usage
-Use `pip install spark-tudu` or download Linux binary/Windows executable from [here](https://github.com/emb3rcia/spark-tudu/releases/tag/release) to install it. Use it by either running `spark-tudu` in directory you want to scan or by running downloaded binary/executable from there, depending on how you installed app.
+Use `pip install spark-tudu` or download Linux binary/Windows executable from [here](https://github.com/emb3rcia/spark-tudu/releases/tag/release) to install it. 
+
+Use it by either running `spark-tudu` in directory you want to scan or by running downloaded binary/executable from there, depending on how you installed app.
+
+You can also use `spark-tudu PROJECT_DIR` to scan given directory, as well as `spark-tudu -h` or `spark-tudu --help` to get more informations about the command
 
 # Supported markers
 Currently supported markers:
@@ -95,7 +108,7 @@ Currently supported priorities:
 
 # Config
 
-spark-tudu supports a config file. The config file must be present in the directory from which you run the program.
+spark-tudu supports a config file. The config file must be present in the project directory being scanned.
 
 If the config file does not exist, spark-tudu uses the default config made for VS Code.
 
@@ -106,6 +119,10 @@ The config file must be named `spark-tudu.toml` and can include these options:
 command = ["command", "arguments"]
 wait = true/false
 terminal = true/false
+
+[files.comment_prefixes]
+"file extension" = ["comment prefixes to scan"]
+
 ```
 Default config:
 ```toml
@@ -113,6 +130,27 @@ Default config:
 command = ["code", "-g", "{file}:{line}"]
 wait = false
 terminal = false
+
+[files.comment_prefixes]
+".py" = ["#"]
+".pyi" = ["#"]
+".pyw" = ["#"]
+".pyx" = ["#"]
+".px" = ["#"]
+".pxi" = ["#"]
+".c" = ["//", "/*", "*"]
+".h" = ["//", "/*", "*"]
+".cpp" = ["//", "/*", "*"]
+".hpp" = ["//", "/*", "*"]
+".cc" = ["//", "/*", "*"]
+".hh" = ["//", "/*", "*"]
+".cxx" = ["//", "/*", "*"]
+".hxx" = ["//", "/*", "*"]
+".js" = ["//", "/*", "*"]
+".jsx" = ["//", "/*", "*"]
+".ts" = ["//", "/*", "*"]
+".tsx" = ["//", "/*", "*"]
+".md" = ["#", "<!--"]
 ```
 
 ## Different editor presets
@@ -185,4 +223,4 @@ Install command for Arch-based distributions:
 # License
 All files are licensed under the Apache 2.0 License.
 
-See `LICENSE` for full terms
+See `Licenses/LICENSE-2.0.txt` for full terms

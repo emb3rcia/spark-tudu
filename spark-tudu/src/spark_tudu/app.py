@@ -3,6 +3,7 @@ import subprocess
 import tomllib
 import datetime
 import json
+import argparse
 
 from rich.text import Text
 
@@ -98,7 +99,22 @@ PRIORITY_COLORS = {
     "UNKNOWN": "#ffffff",
 }
 
-COMMENT_PREFIXES = {
+PRIORITY_ORDER = {
+    "CRITICAL": 0,
+    "HIGH": 1,
+    "MEDIUM": 2,
+    "LOW": 3,
+    "OPTIONAL": 4,
+    "UNKNOWN": 5,
+}
+
+DEFAULT_EDITOR = {
+    "command": ["code", "-g", "{file}:{line}"],
+    "wait": False,
+    "terminal": False,
+}
+
+DEFAULT_COMMENT_PREFIXES = {
     ".py": ["#"],
     ".pyi": ["#"],
     ".pyw": ["#"],
@@ -120,29 +136,48 @@ COMMENT_PREFIXES = {
     ".md": ["#", "<!--"],
 }
 
-PRIORITY_ORDER = {
-    "CRITICAL": 0,
-    "HIGH": 1,
-    "MEDIUM": 2,
-    "LOW": 3,
-    "OPTIONAL": 4,
-    "UNKNOWN": 5,
-}
+EDITOR = DEFAULT_EDITOR.copy()
+COMMENT_PREFIXES = DEFAULT_COMMENT_PREFIXES.copy()
 
-def get_config_editor():
+def get_config():
     config_path = PROJECT_DIR / "spark-tudu.toml"
 
+    editor = DEFAULT_EDITOR.copy()
+    comment_prefixes = DEFAULT_COMMENT_PREFIXES.copy()
+
     if not config_path.exists():
-        return {
-            "command": ["code", "-g", "{file}:{line}"],
-            "wait": False,
-            "terminal": False
-        }
+        return editor, comment_prefixes
 
     with open(config_path, "rb") as file:
         config = tomllib.load(file)
 
-    return config.get("editor", {})     
+    editor.update(config.get("editor", {}))
+
+    configured_prefixes = (
+        config.get("files", {})
+        .get("comment_prefixes", {})
+    )
+
+    if not isinstance(configured_prefixes, dict):
+        raise ValueError("files.comment_prefixes must be a TOML table")
+
+    for extension, prefixes in configured_prefixes.items():
+        if not isinstance(extension, str) or not extension.startswith("."):
+            raise ValueError(
+                f"Invalid file extension in comment prefixes: {extension!r}"
+            )
+
+        if not isinstance(prefixes, list) or not all(
+            isinstance(prefix, str) and prefix
+            for prefix in prefixes
+        ):
+            raise ValueError(
+                f"Comment prefixes for {extension!r} must be an array of non-empty strings"
+            )
+
+    comment_prefixes.update(configured_prefixes)
+
+    return editor, comment_prefixes
 
 def build_editor_command(command_template, file_path, line_number):
     return [
@@ -150,11 +185,9 @@ def build_editor_command(command_template, file_path, line_number):
     ]
 
 def open_in_editor(file_name, line_number, app):
-    editor = get_config_editor()
-
-    command_template = editor.get("command", ["code", "-g", "{file}:{line}"])
-    wait = editor.get("wait", False)
-    terminal = editor.get("terminal", False)
+    command_template = EDITOR.get("command", ["code", "-g", "{file}:{line}"])
+    wait = EDITOR.get("wait", False)
+    terminal = EDITOR.get("terminal", False)
 
     file_path = PROJECT_DIR / file_name
 
@@ -236,7 +269,8 @@ def scan():
     return rows, data
 
 
-ROWS, DATA = scan()
+ROWS = []
+DATA = {}
 
 
 def list_items_compose():
@@ -363,7 +397,8 @@ class TuduApp(App):
         )
 
     def action_rescan(self) -> None:
-        global ROWS, DATA
+        global ROWS, DATA, EDITOR, COMMENT_PREFIXES
+        EDITOR, COMMENT_PREFIXES = get_config()
         ROWS, DATA = scan()
         global list_items_composed, found_items_composed
         list_items_composed, found_items_composed = list_items_compose()
@@ -495,6 +530,43 @@ class TuduApp(App):
         details.update(details_string)
 
 
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="spark-tudu",
+        description="Scan a project for structured comment markers.",
+        epilog="Marker syntax documentation: https://github.com/emb3rcia/spark-tudu#syntax",
+    )
+
+    parser.add_argument(
+        "project_dir",
+        nargs="?",
+        type=Path,
+        default=Path.cwd(),
+        metavar="PROJECT_DIR",
+        help="Directory to scan. Defaults to the current working directory.",
+    )
+
+    return parser
+
+def resolve_project_dir(parser: argparse.ArgumentParser, path: Path) -> Path:
+    project_dir = path.expanduser().resolve()
+    if not project_dir.exists():
+        parser.error(f"Project directory doesn't exist: {project_dir}")
+
+    if not project_dir.is_dir():
+        parser.error(f"Project path is not a directory: {project_dir}")
+    
+    return project_dir
+
 def main() -> None:
+    global PROJECT_DIR, EDITOR, COMMENT_PREFIXES
+
+    parser = build_parser()
+    args = parser.parse_args()
+
+    PROJECT_DIR = resolve_project_dir(parser, args.project_dir)
+
+    EDITOR, COMMENT_PREFIXES = get_config()
+
     app = TuduApp()
     app.run()
